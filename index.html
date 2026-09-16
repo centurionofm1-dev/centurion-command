@@ -654,11 +654,21 @@
   });
   showView(window.location.hash.replace('#', '') || 'home');
 
-  /* ---------- PAINT (static, auto-updated by scheduled sync) ---------- */
-  renderTraffic(FALLBACK_VAS);
-  renderEarnings(FALLBACK_VAS);
-  renderShadowban(FALLBACK_ACCOUNTS);
-  renderGrowth(FALLBACK_ACCOUNTS);
+  /* ---------- PAINT (live data.json in this repo, falls back to embedded snapshot) ---------- */
+  function paint(vas, accounts){
+    renderTraffic(vas);
+    renderEarnings(vas);
+    renderShadowban(accounts);
+    renderGrowth(accounts);
+  }
+  fetch('./data.json', { cache: 'no-store' })
+    .then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(function(data){
+      if(data.payoutTiers) PAYOUT_TIERS = data.payoutTiers;
+      if(data.baselineDate) BASELINE_DATE = data.baselineDate;
+      paint(data.vas || FALLBACK_VAS, data.accounts || FALLBACK_ACCOUNTS);
+    })
+    .catch(function(){ paint(FALLBACK_VAS, FALLBACK_ACCOUNTS); });
 })();
 </script>
 
